@@ -1,3 +1,9 @@
+import { Variable } from '../models/Variable.js';
+import { decrypt } from './crypto.js';
+import { databaseReferences } from './databases.js';
+
+const REFERENCE = /\$\{\{\s*([a-z.]+)\s*\}\}/g;
+
 export async function resolveVariables(service, environment) {
   const stored = await Variable.find({ service: service._id, environment: environment._id }).lean();
   const variables = new Map();

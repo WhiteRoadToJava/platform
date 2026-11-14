@@ -51,8 +51,9 @@ export function createApp() {
     if (err.name === 'CastError') {
       return res.status(404).json({ error: 'Not found.' });
     }
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+       console.error(err);
+    const detail = config.NODE_ENV === 'development' ? { detail: err.message, stack: err.stack } : {};
+    res.status(500).json({ error: 'Internal server error', ...detail });
   });
 
   return app;
