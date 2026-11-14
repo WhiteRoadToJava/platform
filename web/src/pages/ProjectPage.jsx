@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 import { api } from '../api.js';
 import { repoLabel, serviceAddress, useApi } from '../hooks.js';
+import DatabasePanel from '../components/DatabasePanel.jsx';
 
 export default function ProjectPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { reloadProjects } = useOutletContext();
-  const { data: project, error, loading } = useApi(`/projects/${projectId}`);
+  const { data: project, error, loading, reload } = useApi(`/projects/${projectId}`);
   const [deleteError, setDeleteError] = useState(null);
 
   if (error) return <p className="form-error">{error.message}</p>;
@@ -55,7 +56,7 @@ export default function ProjectPage() {
           <p>No services yet. Add one for each GitHub repository in this app, such as the frontend and the backend.</p>
         </div>
       )}
-
+      <DatabasePanel project={project} onChange={reload} />
       <div className="danger-zone">
         <p className="muted">Deleting a project removes its settings. Remove its services first.</p>
         <button className="button-danger" type="button" onClick={deleteProject}>

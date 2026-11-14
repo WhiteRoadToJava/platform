@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Project } from '../models/Project.js';
 import { Service } from '../models/Service.js';
 import { HttpError, parseBody, slug } from '../lib/validation.js';
+import { Variable } from '../models/Variable.js';
 
 const serviceInput = z.object({
   name: z.string().trim().min(1, 'Enter a name.').max(60),
@@ -67,5 +68,6 @@ servicesRouter.put('/services/:id', async (req, res) => {
 servicesRouter.delete('/services/:id', async (req, res) => {
   const service = await Service.findByIdAndDelete(req.params.id);
   if (!service) throw new HttpError(404, 'Service not found.');
+  await Variable.deleteMany({ service: service._id });
   res.json({ ok: true });
 });

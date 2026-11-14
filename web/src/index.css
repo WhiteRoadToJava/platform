@@ -472,3 +472,148 @@ a {
 .field select {
   height: 42px;
 }
+
+/* Panels */
+
+.panel-section {
+  margin-top: 48px;
+}
+
+.panel-section > .muted {
+  margin-bottom: 16px;
+}
+
+.subsection-title {
+  margin: 32px 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 24px;
+  margin: 0 0 16px;
+}
+
+.facts dt {
+  color: var(--ink-muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+code.mono {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.button-small {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.button-link {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--action);
+  cursor: pointer;
+}
+
+/* Variables */
+
+.var-list {
+  margin-bottom: 16px;
+}
+
+.var-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 240px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.var-row + .var-row {
+  border-top: 1px solid var(--line);
+}
+
+.var-row-resolved {
+  grid-template-columns: 1fr auto;
+}
+
+.var-key {
+  overflow-wrap: anywhere;
+}
+
+.var-value {
+  overflow-wrap: anywhere;
+  color: var(--ink-muted);
+}
+
+.var-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.inline-form {
+  display: flex;
+  grid-column: 2 / 4;
+  gap: 6px;
+}
+
+.inline-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-variable {
+  display: grid;
+  grid-template-columns: minmax(140px, 240px) 1fr auto;
+  gap: 8px;
+}
+
+.add-variable input,
+.inline-form input,
+.import-form textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.import-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.tag {
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .var-row,
+  .add-variable {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    grid-column: 1;
+  }
+}

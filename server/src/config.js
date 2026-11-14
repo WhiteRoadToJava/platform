@@ -7,6 +7,10 @@ const schema = z.object({
   MONGODB_URI: z.string().startsWith('mongodb://', 'MONGODB_URI must start with mongodb://'),
   COOKIE_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   TRAEFIK_PROVIDER_TOKEN: z.string().min(32, 'TRAEFIK_PROVIDER_TOKEN must be at least 32 characters'),
+  PLATFORM_MASTER_KEY: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/, 'PLATFORM_MASTER_KEY must be 64 hex characters (openssl rand -hex 32)'),
+  APP_MONGODB_HOST: z.string().default('mongodb:27017'),
 });
 
 const result = schema.safeParse(process.env);

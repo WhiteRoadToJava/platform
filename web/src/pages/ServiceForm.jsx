@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { api } from '../api.js';
 import { slugify, useApi } from '../hooks.js';
+import VariablesPanel from '../components/VariablesPanel.jsx';
 
 const DEFAULTS = {
   name: '',
@@ -88,7 +89,7 @@ export default function ServiceForm() {
       setBusy(false);
     }
   }
-
+  { editing && <VariablesPanel serviceId={serviceId} /> }
   async function deleteService() {
     if (!window.confirm(`Delete ${form.name}? This cannot be undone.`)) return;
     try {

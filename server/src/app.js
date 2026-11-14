@@ -7,6 +7,8 @@ import { authRouter } from './routes/auth.js';
 import { projectsRouter } from './routes/projects.js';
 import { servicesRouter } from './routes/services.js';
 import { internalRouter } from './routes/internal.js';
+import { variablesRouter } from './routes/variables.js';
+import { environmentsRouter } from './routes/environments.js';
 
 export function createApp() {
   const app = express();
@@ -22,6 +24,8 @@ export function createApp() {
   app.use('/api/projects', projectsRouter);
   app.use('/api', servicesRouter);
   app.use('/api/internal', internalRouter);
+    app.use('/api', variablesRouter);
+  app.use('/api', environmentsRouter);
 
   app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Not found' });

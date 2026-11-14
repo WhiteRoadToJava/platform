@@ -35,7 +35,7 @@ projectsRouter.get('/:id', async (req, res) => {
   const project = await Project.findById(req.params.id).lean();
   if (!project) throw new HttpError(404, 'Project not found.');
   const [environments, services] = await Promise.all([
-    Environment.find({ project: project._id }).lean(),
+    Environment.find({ project: project._id }).select('-database.passwordEncrypted').lean(),
     Service.find({ project: project._id }).sort({ name: 1 }).lean(),
   ]);
   res.json({ ...project, environments, services });
