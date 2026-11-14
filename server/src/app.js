@@ -2,15 +2,23 @@ import path from 'node:path';
 import express from 'express';
 import { config } from './config.js';
 import { isDbConnected } from './db.js';
+import { requireAuth } from './middleware/requireAuth.js';
+import { authRouter } from './routes/auth.js';
 
 export function createApp() {
   const app = express();
+    app.use('/api', requireAuth);
+
+
+
   app.use(express.json({ limit: '1mb' }));
 
   app.get('/api/health', (req, res) => {
     const db = isDbConnected();
     res.status(db ? 200 : 503).json({ status: db ? 'ok' : 'degraded', db });
   });
+    app.use('/api/auth', authRouter);
+      app.use('/api/auth', authRouter);
 
   app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Not found' });

@@ -5,6 +5,7 @@ const schema = z.object({
   HOST: z.string().default('127.0.0.1'),
   PORT: z.coerce.number().int().positive().default(4000),
   MONGODB_URI: z.string().startsWith('mongodb://', 'MONGODB_URI must start with mongodb://'),
+    COOKIE_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
 });
 
 const result = schema.safeParse(process.env);

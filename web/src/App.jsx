@@ -1,26 +1,18 @@
 import { useEffect, useState } from 'react';
+import { api } from './api.js';
+import Login from './Login.jsx';
+import Shell from './Shell.jsx';
 
 export default function App() {
-  const [health, setHealth] = useState(null);
-  const [error, setError] = useState(null);
+  const [auth, setAuth] = useState('checking');
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then(setHealth)
-      .catch((err) => setError(err.message));
+    api('/auth/me')
+      .then(() => setAuth('signed-in'))
+      .catch(() => setAuth('signed-out'));
   }, []);
 
-  return (
-    <main>
-      <h1>Platform</h1>
-      {error && <p>Cannot reach the server: {error}</p>}
-      {!error && !health && <p>Checking the server…</p>}
-      {health && (
-        <p>
-          Server: {health.status}. Database: {health.db ? 'connected' : 'disconnected'}.
-        </p>
-      )}
-    </main>
-  );
+  if (auth === 'checking') return <p style={{ padding: 24 }}>Checking your session…</p>;
+  if (auth === 'signed-out') return <Login onSignedIn={() => setAuth('signed-in')} />;
+  return <Shell onSignedOut={() => setAuth('signed-out')} />;
 }
