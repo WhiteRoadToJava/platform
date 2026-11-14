@@ -7,6 +7,7 @@ import ProjectsHome from './pages/ProjectsHome.jsx';
 import NewProject from './pages/NewProject.jsx';
 import ProjectPage from './pages/ProjectPage.jsx';
 import ServiceForm from './pages/ServiceForm.jsx';
+import DeploymentPage from './pages/DeploymentPage.jsx';
 
 export default function App() {
   const [auth, setAuth] = useState('checking');
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="projects/:projectId" element={<ProjectPage />} />
           <Route path="projects/:projectId/services/new" element={<ServiceForm />} />
           <Route path="services/:serviceId" element={<ServiceForm />} />
+          <Route path="deployments/:deploymentId" element={<DeploymentPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

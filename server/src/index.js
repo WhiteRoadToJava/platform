@@ -2,8 +2,10 @@ import { config } from './config.js';
 import { connectDb } from './db.js';
 import { createApp } from './app.js';
 import mongoose from 'mongoose';
+import { startBuildWorker } from './builds/worker.js';
 
 await connectDb(config.MONGODB_URI);
+await startBuildWorker();
 
 const app = createApp();
 const server = app.listen(config.PORT, config.HOST, () => {

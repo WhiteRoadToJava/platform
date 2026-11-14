@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { api } from '../api.js';
 import { slugify, useApi } from '../hooks.js';
 import VariablesPanel from '../components/VariablesPanel.jsx';
+import DeploymentsPanel from '../components/DeploymentsPanel.jsx';
 
 const DEFAULTS = {
   name: '',
@@ -103,6 +104,8 @@ export default function ServiceForm() {
     <div className="page">
       <h1>{editing ? form.name || 'Service' : 'Add service'}</h1>
       <p className="muted">In {project.name}</p>
+      
+      {editing && <DeploymentsPanel serviceId={serviceId} />}
 
       <form className="form" onSubmit={handleSubmit}>
         <fieldset>

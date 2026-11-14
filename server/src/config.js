@@ -11,6 +11,8 @@ const schema = z.object({
     .string()
     .regex(/^[0-9a-f]{64}$/, 'PLATFORM_MASTER_KEY must be 64 hex characters (openssl rand -hex 32)'),
   APP_MONGODB_HOST: z.string().default('mongodb:27017'),
+  PLATFORM_DATA_DIR: z.string().default('/srv/platform/data/platform'),
+  BUILD_TIMEOUT_MINUTES: z.coerce.number().int().positive().default(20),
 });
 
 const result = schema.safeParse(process.env);

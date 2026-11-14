@@ -623,3 +623,44 @@ code.mono {
   color: var(--busy);
   font-size: 14px;
 }
+
+
+/* Deployments */
+
+.panel-first {
+  margin-top: 24px;
+}
+
+.panel-first .page-header {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.panel-first .section-title {
+  margin: 0;
+}
+
+.page-wide {
+  max-width: 1100px;
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.log {
+  max-height: 70vh;
+  margin: 20px 0 0;
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

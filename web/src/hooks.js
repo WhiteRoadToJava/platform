@@ -39,3 +39,15 @@ export function serviceAddress(service, baseDomain) {
 export function repoLabel(service) {
   return `${service.repoUrl.replace('https://github.com/', '')} (${service.branch})`;
 }
+
+export const DEPLOYMENT_STATUS = {
+  queued: { label: 'Queued', lamp: 'busy' },
+  building: { label: 'Building', lamp: 'busy' },
+  built: { label: 'Built', lamp: 'ok' },
+  failed: { label: 'Failed', lamp: 'fail' },
+  cancelled: { label: 'Cancelled', lamp: undefined },
+};
+
+export function formatTime(value) {
+  return value ? new Date(value).toLocaleString() : '';
+}

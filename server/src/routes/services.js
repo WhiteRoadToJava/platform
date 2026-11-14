@@ -12,8 +12,12 @@ const serviceInput = z.object({
     .string()
     .trim()
     .regex(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/, 'Enter a GitHub URL like https://github.com/owner/repo.'),
-  branch: z.string().trim().min(1, 'Enter a branch.').max(100),
-  buildType: z.enum(['auto', 'dockerfile', 'java', 'react', 'node']),
+  branch: z
+    .string()
+    .trim()
+    .regex(/^(?!-)[A-Za-z0-9._/-]+$/, 'Use a valid branch name, like main or feature/login.')
+    .max(100),
+     buildType: z.enum(['auto', 'dockerfile', 'java', 'react', 'node']),
   internalPort: z.coerce.number().int().min(1).max(65535),
   subdomain: z.union([slug, z.literal('')]),
   pathPrefix: z.union([z.string().regex(/^\/[a-z0-9/_-]*[a-z0-9_-]$/, 'Use a path like /api.'), z.literal('')]),
