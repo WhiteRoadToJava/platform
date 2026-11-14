@@ -4,21 +4,22 @@ import { config } from './config.js';
 import { isDbConnected } from './db.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { authRouter } from './routes/auth.js';
+import { projectsRouter } from './routes/projects.js';
+import { servicesRouter } from './routes/services.js';
 
 export function createApp() {
   const app = express();
-    app.use('/api', requireAuth);
-
-
-
   app.use(express.json({ limit: '1mb' }));
+  app.use('/api', requireAuth);
 
   app.get('/api/health', (req, res) => {
     const db = isDbConnected();
     res.status(db ? 200 : 503).json({ status: db ? 'ok' : 'degraded', db });
   });
-    app.use('/api/auth', authRouter);
-      app.use('/api/auth', authRouter);
+
+  app.use('/api/auth', authRouter);
+  app.use('/api/projects', projectsRouter);
+  app.use('/api', servicesRouter);
 
   app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Not found' });
@@ -33,6 +34,15 @@ export function createApp() {
   }
 
   app.use((err, req, res, next) => {
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+    if (err.code === 11000) {
+      return res.status(409).json({ error: 'That slug is already in use. Choose another one.' });
+    }
+    if (err.name === 'CastError') {
+      return res.status(404).json({ error: 'Not found.' });
+    }
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   });
