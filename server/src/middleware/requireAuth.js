@@ -4,6 +4,7 @@ const PUBLIC_ROUTES = [
   ['GET', '/health'],
   ['POST', '/auth/login'],
   ['POST', '/auth/logout'],
+  ['GET', '/internal/traefik'],
 ];
 
 export async function requireAuth(req, res, next) {

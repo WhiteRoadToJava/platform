@@ -6,6 +6,7 @@ import { requireAuth } from './middleware/requireAuth.js';
 import { authRouter } from './routes/auth.js';
 import { projectsRouter } from './routes/projects.js';
 import { servicesRouter } from './routes/services.js';
+import { internalRouter } from './routes/internal.js';
 
 export function createApp() {
   const app = express();
@@ -20,6 +21,7 @@ export function createApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/projects', projectsRouter);
   app.use('/api', servicesRouter);
+  app.use('/api/internal', internalRouter);
 
   app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Not found' });

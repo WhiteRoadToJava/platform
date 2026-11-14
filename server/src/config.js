@@ -5,7 +5,8 @@ const schema = z.object({
   HOST: z.string().default('127.0.0.1'),
   PORT: z.coerce.number().int().positive().default(4000),
   MONGODB_URI: z.string().startsWith('mongodb://', 'MONGODB_URI must start with mongodb://'),
-    COOKIE_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+  COOKIE_SECURE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+  TRAEFIK_PROVIDER_TOKEN: z.string().min(32, 'TRAEFIK_PROVIDER_TOKEN must be at least 32 characters'),
 });
 
 const result = schema.safeParse(process.env);
