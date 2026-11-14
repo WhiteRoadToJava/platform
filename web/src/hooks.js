@@ -48,6 +48,7 @@ export const DEPLOYMENT_STATUS = {
   superseded: { label: 'Replaced', lamp: undefined },
   failed: { label: 'Failed', lamp: 'fail' },
   cancelled: { label: 'Cancelled', lamp: undefined },
+  built: { label: 'Built', lamp: undefined },
 };
 
 export const ACTIVE_STATUSES = ['queued', 'building', 'deploying'];

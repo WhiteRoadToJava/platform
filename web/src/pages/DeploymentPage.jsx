@@ -53,8 +53,8 @@ export default function DeploymentPage() {
   }
 
   const deployment = info.data;
-  const current = DEPLOYMENT_STATUS[status || deployment?.status || 'queued'];
-
+    const currentStatus = status || deployment?.status || 'queued';
+  const current = DEPLOYMENT_STATUS[currentStatus] ?? { label: currentStatus };
   return (
     <div className="page page-wide">
       {deployment && (

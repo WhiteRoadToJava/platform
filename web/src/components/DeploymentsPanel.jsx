@@ -22,6 +22,7 @@ export default function DeploymentsPanel({ serviceId }) {
     setError(null);
     try {
       const deployment = await api(`/services/${serviceId}/deployments`, { method: 'POST' });
+      const status = DEPLOYMENT_STATUS[deployment.status] ?? { label: deployment.status };
       navigate(`/deployments/${deployment._id}`);
     } catch (err) {
       setError(err.message);

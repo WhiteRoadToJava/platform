@@ -7,7 +7,7 @@ import { logPath } from '../builds/worker.js';
 import { productionEnvironment } from '../lib/environments.js';
 import { HttpError } from '../lib/validation.js';
 
-const FINAL_STATUSES = ['running', 'superseded', 'failed', 'cancelled'];
+const FINAL_STATUSES = ['built', 'running', 'superseded', 'failed', 'cancelled'];
 const MAX_CHUNK = 256 * 1024;
 
 export const deploymentsRouter = Router();
