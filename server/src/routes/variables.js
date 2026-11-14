@@ -4,7 +4,7 @@ import { Service } from '../models/Service.js';
 import { Variable } from '../models/Variable.js';
 import { decrypt, encrypt } from '../lib/crypto.js';
 import { productionEnvironment } from '../lib/environments.js';
-import { resolveVariables } from '../lib/Variables.js';
+import { resolveVariables } from '../lib/variables.js';
 import { HttpError, parseBody } from '../lib/validation.js';
 
 const KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;

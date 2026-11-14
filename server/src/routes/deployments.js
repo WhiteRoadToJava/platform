@@ -7,7 +7,7 @@ import { logPath } from '../builds/worker.js';
 import { productionEnvironment } from '../lib/environments.js';
 import { HttpError } from '../lib/validation.js';
 
-const FINAL_STATUSES = ['built', 'failed', 'cancelled'];
+const FINAL_STATUSES = ['running', 'superseded', 'failed', 'cancelled'];
 const MAX_CHUNK = 256 * 1024;
 
 export const deploymentsRouter = Router();
@@ -16,7 +16,11 @@ deploymentsRouter.post('/services/:id/deployments', async (req, res) => {
   const service = await Service.findById(req.params.id);
   if (!service) throw new HttpError(404, 'Service not found.');
 
-  const active = await Deployment.exists({ service: service._id, status: { $in: ['queued', 'building'] } });
+  const active = await Deployment.exists({
+    service: service._id,
+    status: { $in: ['queued', 'building', 'deploying'] },
+  });
+  if (active) throw new HttpError(409, 'A deployment for this service is already in progress.');
   if (active) throw new HttpError(409, 'A build for this service is already queued or running.');
 
   const environment = await productionEnvironment(service.project);

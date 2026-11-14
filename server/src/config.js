@@ -13,6 +13,8 @@ const schema = z.object({
   APP_MONGODB_HOST: z.string().default('mongodb:27017'),
   PLATFORM_DATA_DIR: z.string().default('/srv/platform/data/platform'),
   BUILD_TIMEOUT_MINUTES: z.coerce.number().int().positive().default(20),
+    APPS_DATA_DIR: z.string().default('/srv/platform/data/apps'),
+  HEALTHCHECK_TIMEOUT_SECONDS: z.coerce.number().int().positive().default(180),
 });
 
 const result = schema.safeParse(process.env);

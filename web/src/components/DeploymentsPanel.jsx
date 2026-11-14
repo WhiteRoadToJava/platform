@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { api } from '../api.js';
-import { DEPLOYMENT_STATUS, formatTime, useApi } from '../hooks.js';
+import { ACTIVE_STATUSES, DEPLOYMENT_STATUS, formatTime, useApi } from '../hooks.js';
 
 export default function DeploymentsPanel({ serviceId }) {
   const navigate = useNavigate();
@@ -9,7 +9,7 @@ export default function DeploymentsPanel({ serviceId }) {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const active = deployments.data?.some((d) => d.status === 'queued' || d.status === 'building');
+  const active = deployments.data?.some((d) => ACTIVE_STATUSES.includes(d.status));
 
   useEffect(() => {
     if (!active) return;
@@ -35,7 +35,7 @@ export default function DeploymentsPanel({ serviceId }) {
       <div className="page-header">
         <h2 className="section-title">Deployments</h2>
         <button className="button-primary" type="button" onClick={startBuild} disabled={busy || active}>
-          {active ? 'Build in progress' : 'Build now'}
+          {active ? 'Deployment in progress' : 'Deploy'}
         </button>
       </div>
       {error && <p className="form-error">{error}</p>}
@@ -58,7 +58,7 @@ export default function DeploymentsPanel({ serviceId }) {
           })}
         </ul>
       ) : (
-        !deployments.loading && <p className="muted">No builds yet. Build the latest commit to create an image.</p>
+        !deployments.loading && <p className="muted">No deployments yet. Deploy the latest commit to put it live.</p>
       )}
     </section>
   );

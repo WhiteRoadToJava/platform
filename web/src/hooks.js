@@ -43,10 +43,14 @@ export function repoLabel(service) {
 export const DEPLOYMENT_STATUS = {
   queued: { label: 'Queued', lamp: 'busy' },
   building: { label: 'Building', lamp: 'busy' },
-  built: { label: 'Built', lamp: 'ok' },
+  deploying: { label: 'Starting', lamp: 'busy' },
+  running: { label: 'Live', lamp: 'ok' },
+  superseded: { label: 'Replaced', lamp: undefined },
   failed: { label: 'Failed', lamp: 'fail' },
   cancelled: { label: 'Cancelled', lamp: undefined },
 };
+
+export const ACTIVE_STATUSES = ['queued', 'building', 'deploying'];
 
 export function formatTime(value) {
   return value ? new Date(value).toLocaleString() : '';
