@@ -89,7 +89,6 @@ export default function ServiceForm() {
       setBusy(false);
     }
   }
-  { editing && <VariablesPanel serviceId={serviceId} /> }
   async function deleteService() {
     if (!window.confirm(`Delete ${form.name}? This cannot be undone.`)) return;
     try {
@@ -257,7 +256,7 @@ export default function ServiceForm() {
           </Link>
         </div>
       </form>
-
+      {editing && <VariablesPanel serviceId={serviceId} />}
       {editing && (
         <div className="danger-zone">
           <p className="muted">Deleting a service removes its settings.</p>
