@@ -617,3 +617,9 @@ code.mono {
     grid-column: 1;
   }
 }
+
+.form-warning {
+  margin: 0 0 8px;
+  color: var(--busy);
+  font-size: 14px;
+}

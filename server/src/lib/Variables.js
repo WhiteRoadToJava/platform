@@ -1,14 +1,9 @@
-import { Variable } from '../models/Variable.js';
-import { decrypt } from './crypto.js';
-import { databaseReferences } from './databases.js';
-
-const REFERENCE = /\$\{\{\s*([a-z.]+)\s*\}\}/g;
-
 export async function resolveVariables(service, environment) {
   const stored = await Variable.find({ service: service._id, environment: environment._id }).lean();
   const refs = databaseReferences(environment);
   const variables = new Map();
   const errors = [];
+  const warnings = [];
 
   variables.set('PORT', { value: String(service.internalPort), source: 'platform' });
   if (refs['db.uri']) {
@@ -26,8 +21,11 @@ export async function resolveVariables(service, environment) {
       errors.push(`${variable.key} uses \${{${name}}}, which is not available.${hint}`);
       return match;
     });
+    if (!value.trim()) {
+      warnings.push(`${variable.key} is empty. Most apps treat an empty value as missing.`);
+    }
     variables.set(variable.key, { value, source: usesReference ? 'reference' : 'yours' });
   }
 
-  return { variables, errors };
+  return { variables, errors, warnings };
 }

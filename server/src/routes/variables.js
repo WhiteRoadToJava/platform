@@ -80,11 +80,10 @@ variablesRouter.post('/services/:id/variables/import', async (req, res) => {
 
 variablesRouter.get('/services/:id/variables/resolved', async (req, res) => {
   const { service, environment } = await loadContext(req.params.id);
-  const { variables, errors } = await resolveVariables(service, environment);
-  const list = [...variables.entries()]
+  const { variables, errors, warnings } = await resolveVariables(service, environment); const list = [...variables.entries()]
     .map(([key, { source }]) => ({ key, source }))
     .sort((a, b) => a.key.localeCompare(b.key));
-  res.json({ variables: list, errors });
+    res.json({ variables: list, errors, warnings });
 });
 
 variablesRouter.get('/variables/:id/value', async (req, res) => {
@@ -98,3 +97,4 @@ variablesRouter.delete('/variables/:id', async (req, res) => {
   if (!variable) throw new HttpError(404, 'Variable not found.');
   res.json({ ok: true });
 });
+

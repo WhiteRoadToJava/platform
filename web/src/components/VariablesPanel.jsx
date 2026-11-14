@@ -188,6 +188,11 @@ export default function VariablesPanel({ serviceId }) {
           {message}
         </p>
       ))}
+      {resolved.data?.warnings.map((message) => (
+        <p key={message} className="form-warning">
+          {message}
+        </p>
+      ))}
       {resolved.data && (
         <ul className="rows var-list">
           {resolved.data.variables.map((variable) => (
