@@ -89,7 +89,11 @@ variablesRouter.get('/services/:id/variables/resolved', async (req, res) => {
 variablesRouter.get('/variables/:id/value', async (req, res) => {
   const variable = await Variable.findById(req.params.id);
   if (!variable) throw new HttpError(404, 'Variable not found.');
-  res.json({ value: decrypt(variable.valueEncrypted) });
+  try {
+    res.json({ value: decrypt(variable.valueEncrypted) });
+  } catch {
+    throw new HttpError(409, `${variable.key} cannot be decrypted. Delete it and add it again.`);
+  }
 });
 
 variablesRouter.delete('/variables/:id', async (req, res) => {

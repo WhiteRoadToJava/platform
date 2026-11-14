@@ -1,9 +1,15 @@
 export async function resolveVariables(service, environment) {
   const stored = await Variable.find({ service: service._id, environment: environment._id }).lean();
-  const refs = databaseReferences(environment);
   const variables = new Map();
   const errors = [];
   const warnings = [];
+
+  let refs = {};
+  try {
+    refs = databaseReferences(environment);
+  } catch {
+    errors.push('The database password cannot be decrypted. The master key changed after the database was created.');
+  }
 
   variables.set('PORT', { value: String(service.internalPort), source: 'platform' });
   if (refs['db.uri']) {
@@ -12,7 +18,14 @@ export async function resolveVariables(service, environment) {
   }
 
   for (const variable of stored) {
-    const raw = decrypt(variable.valueEncrypted);
+    let raw;
+    try {
+      raw = decrypt(variable.valueEncrypted);
+    } catch {
+      errors.push(`${variable.key} cannot be decrypted. It was saved with a different master key. Edit it and save its value again.`);
+      continue;
+    }
+
     let usesReference = false;
     const value = raw.replace(REFERENCE, (match, name) => {
       usesReference = true;
