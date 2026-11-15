@@ -15,6 +15,7 @@ const schema = z.object({
   BUILD_TIMEOUT_MINUTES: z.coerce.number().int().positive().default(20),
     APPS_DATA_DIR: z.string().default('/srv/platform/data/apps'),
   HEALTHCHECK_TIMEOUT_SECONDS: z.coerce.number().int().positive().default(180),
+    WORKER_ENABLED: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
 });
 
 const result = schema.safeParse(process.env);

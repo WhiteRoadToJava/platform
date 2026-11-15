@@ -5,7 +5,11 @@ import mongoose from 'mongoose';
 import { startBuildWorker } from './builds/worker.js';
 
 await connectDb(config.MONGODB_URI);
-await startBuildWorker();
+if (config.WORKER_ENABLED) {
+  await startBuildWorker();
+} else {
+  console.log('Deployment worker disabled (WORKER_ENABLED=false)');
+}
 
 const app = createApp();
 const server = app.listen(config.PORT, config.HOST, () => {
