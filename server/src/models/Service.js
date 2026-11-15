@@ -14,6 +14,7 @@ const serviceSchema = new mongoose.Schema(
     },
     internalPort: { type: Number, required: true },
     subdomain: { type: String, default: '' },
+    customDomains: [{ type: String }],
     pathPrefix: { type: String, default: '' },
     stripPrefix: { type: Boolean, default: false },
     healthcheckPath: { type: String, default: '' },

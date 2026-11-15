@@ -17,6 +17,7 @@ const DEFAULTS = {
   stripPrefix: false,
   healthcheckPath: '',
   memoryLimitMb: 512,
+  customDomains: [],
 };
 
 const BUILD_TYPES = [
@@ -37,6 +38,7 @@ export default function ServiceForm() {
   const [slugEdited, setSlugEdited] = useState(editing);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [domainsText, setDomainsText] = useState('');
 
   useEffect(() => {
     if (!source.data) return;
@@ -44,6 +46,7 @@ export default function ServiceForm() {
       const { _id, project, createdAt, updatedAt, __v, volumes, ...fields } = source.data;
       setForm(fields);
       setVolumesText(volumes.map((v) => v.containerPath).join('\n'));
+      setDomainsText((fields.customDomains ?? []).join('\n'));
     } else {
       setForm(DEFAULTS);
     }
@@ -53,7 +56,11 @@ export default function ServiceForm() {
   if (!form) return <p className="muted">Loading…</p>;
 
   const project = editing ? source.data.project : source.data;
-  const address = form.subdomain ? `https://${form.subdomain}.${project.baseDomain}${form.pathPrefix}` : null;
+  const addresses = [
+    ...(form.subdomain ? [`${form.subdomain}.${project.baseDomain}`] : []),
+    ...domainsText.split('\n').map((line) => line.trim().toLowerCase()).filter(Boolean),
+  ].map((host) => `https://${host}${form.pathPrefix}`);
+
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -76,6 +83,10 @@ export default function ServiceForm() {
         .map((line) => line.trim())
         .filter(Boolean)
         .map((containerPath) => ({ containerPath })),
+      customDomains: domainsText
+        .split('\n')
+        .map((line) => line.trim().toLowerCase())
+        .filter(Boolean),
     };
     try {
       if (editing) {
@@ -104,7 +115,7 @@ export default function ServiceForm() {
     <div className="page">
       <h1>{editing ? form.name || 'Service' : 'Add service'}</h1>
       <p className="muted">In {project.name}</p>
-      
+
       {editing && <DeploymentsPanel serviceId={serviceId} />}
 
       <form className="form" onSubmit={handleSubmit}>
@@ -198,8 +209,16 @@ export default function ServiceForm() {
             </span>
           </label>
           <div className="address-preview">
-            <span className="field-hint">Public address</span>
-            <span className="mono">{address ?? 'This service has no public address.'}</span>
+            <span className="field-hint">{addresses.length > 1 ? 'Public addresses' : 'Public address'}</span>
+            {addresses.length ? (
+              addresses.map((address) => (
+                <span key={address} className="mono">
+                  {address}
+                </span>
+              ))
+            ) : (
+              <span className="mono">This service has no public address.</span>
+            )}
           </div>
         </fieldset>
 
@@ -228,6 +247,21 @@ export default function ServiceForm() {
               />
               <span className="field-hint">Returns 200 when the app is ready. Used to verify new deployments.</span>
             </div>
+          </div>
+          <div className="field">
+            <label htmlFor="customDomains">Custom domains</label>
+            <textarea
+              id="customDomains"
+              className="mono"
+              rows={2}
+              value={domainsText}
+              onChange={(e) => setDomainsText(e.target.value)}
+              placeholder={'example.com\nwww.example.com'}
+            />
+            <span className="field-hint">
+              Full domains this service also answers on, one per line. Each needs a public route to your tunnel in
+              Cloudflare.
+            </span>
           </div>
           <div className="field">
             <label htmlFor="volumes">Persistent folders</label>

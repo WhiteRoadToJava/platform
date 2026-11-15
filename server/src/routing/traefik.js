@@ -1,5 +1,6 @@
 import { Project } from '../models/Project.js';
 import { Service } from '../models/Service.js';
+import { hostsOf } from '../lib/hosts.js';
 
 export function containerName(project, service) {
   return `${project.slug}-${service.slug}`;
@@ -8,7 +9,7 @@ export function containerName(project, service) {
 export async function buildTraefikConfig() {
   const [projects, services] = await Promise.all([
     Project.find().lean(),
-    Service.find({ subdomain: { $ne: '' } }).lean(),
+    Service.find().lean(),
   ]);
   const projectsById = new Map(projects.map((p) => [p._id.toString(), p]));
 
@@ -20,13 +21,17 @@ export async function buildTraefikConfig() {
     const project = projectsById.get(service.project.toString());
     if (!project) continue;
 
+    const hosts = hostsOf(service, project);
+    if (!hosts.length) continue;
+
     const name = containerName(project, service);
-    const host = `${service.subdomain}.${project.baseDomain}`;
+    const hostRule = hosts.map((host) => `Host(\`${host}\`)`).join(' || ');
     const rule = service.pathPrefix
-      ? `Host(\`${host}\`) && PathPrefix(\`${service.pathPrefix}\`)`
-      : `Host(\`${host}\`)`;
+      ? `(${hostRule}) && PathPrefix(\`${service.pathPrefix}\`)`
+      : hostRule;
 
     routers[name] = { rule, entryPoints: ['web'], service: name };
+
 
     if (service.pathPrefix && service.stripPrefix) {
       const middleware = `${name}-strip`;

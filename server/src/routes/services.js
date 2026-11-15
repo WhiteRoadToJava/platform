@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Project } from '../models/Project.js';
 import { Service } from '../models/Service.js';
-import { HttpError, parseBody, slug } from '../lib/validation.js';
 import { Variable } from '../models/Variable.js';
+import { HttpError, domain, parseBody, slug } from '../lib/validation.js';
+import { hostsOf } from '../lib/hosts.js';
 
 const serviceInput = z.object({
   name: z.string().trim().min(1, 'Enter a name.').max(60),
@@ -17,9 +18,10 @@ const serviceInput = z.object({
     .trim()
     .regex(/^(?!-)[A-Za-z0-9._/-]+$/, 'Use a valid branch name, like main or feature/login.')
     .max(100),
-     buildType: z.enum(['auto', 'dockerfile', 'java', 'react', 'node']),
+  buildType: z.enum(['auto', 'dockerfile', 'java', 'react', 'node']),
   internalPort: z.coerce.number().int().min(1).max(65535),
   subdomain: z.union([slug, z.literal('')]),
+  customDomains: z.array(domain).max(5),
   pathPrefix: z.union([z.string().regex(/^\/[a-z0-9/_-]*[a-z0-9_-]$/, 'Use a path like /api.'), z.literal('')]),
   stripPrefix: z.boolean(),
   healthcheckPath: z.union([z.string().startsWith('/', 'Start the path with /.'), z.literal('')]),
@@ -28,14 +30,21 @@ const serviceInput = z.object({
 });
 
 async function assertRouteIsFree(project, input, excludeId) {
-  if (!input.subdomain) return;
-  const filter = { subdomain: input.subdomain, pathPrefix: input.pathPrefix };
+  const duplicate = wanted.find((host, index) => wanted.indexOf(host) !== index);
+  if (duplicate) {
+    throw new HttpError(400, `${duplicate} is listed more than once. Remove it from the custom domains.`);
+  }
+  const wanted = hostsOf(input, project);
+  if (!wanted.length) return;
+  const filter = { pathPrefix: input.pathPrefix };
   if (excludeId) filter._id = { $ne: excludeId };
-  const candidates = await Service.find(filter).populate('project', 'baseDomain name');
-  const clash = candidates.find((s) => s.project?.baseDomain === project.baseDomain);
-  if (clash) {
-    const route = `${input.subdomain}.${project.baseDomain}${input.pathPrefix || '/'}`;
-    throw new HttpError(409, `${route} is already used by ${clash.name} in ${clash.project.name}.`);
+  const others = await Service.find(filter).populate('project', 'baseDomain name');
+  for (const other of others) {
+    if (!other.project) continue;
+    const taken = hostsOf(other, other.project).find((host) => wanted.includes(host));
+    if (taken) {
+      throw new HttpError(409, `${taken}${input.pathPrefix || '/'} is already used by ${other.name} in ${other.project.name}.`);
+    }
   }
 }
 

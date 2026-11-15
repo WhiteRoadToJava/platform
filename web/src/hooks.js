@@ -32,8 +32,13 @@ export function slugify(text) {
 }
 
 export function serviceAddress(service, baseDomain) {
-  if (!service.subdomain) return 'No public address';
-  return `${service.subdomain}.${baseDomain}${service.pathPrefix}`;
+  const hosts = [
+    ...(service.subdomain ? [`${service.subdomain}.${baseDomain}`] : []),
+    ...(service.customDomains ?? []),
+  ];
+  if (!hosts.length) return 'No public address';
+  const extra = hosts.length > 1 ? ` and ${hosts.length - 1} more` : '';
+  return `${hosts[0]}${service.pathPrefix}${extra}`;
 }
 
 export function repoLabel(service) {
