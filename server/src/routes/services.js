@@ -21,7 +21,7 @@ const serviceInput = z.object({
   buildType: z.enum(['auto', 'dockerfile', 'java', 'react', 'node']),
   internalPort: z.coerce.number().int().min(1).max(65535),
   subdomain: z.union([slug, z.literal('')]),
-  customDomains: z.array(domain).max(5),
+  customDomains: z.array(domain).max(5).default([]),
   pathPrefix: z.union([z.string().regex(/^\/[a-z0-9/_-]*[a-z0-9_-]$/, 'Use a path like /api.'), z.literal('')]),
   stripPrefix: z.boolean(),
   healthcheckPath: z.union([z.string().startsWith('/', 'Start the path with /.'), z.literal('')]),
@@ -30,18 +30,22 @@ const serviceInput = z.object({
 });
 
 async function assertRouteIsFree(project, input, excludeId) {
-  const duplicate = wanted.find((host, index) => wanted.indexOf(host) !== index);
+  const requested = [
+    ...(input.subdomain ? [`${input.subdomain}.${project.baseDomain}`] : []),
+    ...input.customDomains,
+  ];
+  const duplicate = requested.find((host, index) => requested.indexOf(host) !== index);
   if (duplicate) {
     throw new HttpError(400, `${duplicate} is listed more than once. Remove it from the custom domains.`);
   }
-  const wanted = hostsOf(input, project);
-  if (!wanted.length) return;
+  if (!requested.length) return;
+
   const filter = { pathPrefix: input.pathPrefix };
   if (excludeId) filter._id = { $ne: excludeId };
   const others = await Service.find(filter).populate('project', 'baseDomain name');
   for (const other of others) {
     if (!other.project) continue;
-    const taken = hostsOf(other, other.project).find((host) => wanted.includes(host));
+    const taken = hostsOf(other, other.project).find((host) => requested.includes(host));
     if (taken) {
       throw new HttpError(409, `${taken}${input.pathPrefix || '/'} is already used by ${other.name} in ${other.project.name}.`);
     }
