@@ -43,7 +43,7 @@ projectsRouter.get('/:id', async (req, res) => {
 
 projectsRouter.put('/:id', async (req, res) => {
   const input = parseBody(projectInput, req.body);
-  const project = await Project.findByIdAndUpdate(req.params.id, input, { new: true, runValidators: true });
+  const project = await Project.findByIdAndUpdate(req.params.id, input, { returnDocument: 'after', runValidators: true });
   if (!project) throw new HttpError(404, 'Project not found.');
   res.json(project);
 });

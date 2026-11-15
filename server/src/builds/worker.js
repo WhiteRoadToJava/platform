@@ -110,7 +110,7 @@ async function tick() {
     const deployment = await Deployment.findOneAndUpdate(
       { status: 'queued' },
       { status: 'building', startedAt: new Date() },
-      { sort: { createdAt: 1 }, new: true },
+      { sort: { createdAt: 1 }, returnDocument: 'after' },
     );
     if (deployment) await runDeployment(deployment);
   } catch (err) {
