@@ -3,8 +3,10 @@ import { connectDb } from './db.js';
 import { createApp } from './app.js';
 import mongoose from 'mongoose';
 import { startBuildWorker } from './builds/worker.js';
+import { startMonitor } from './monitor/contauners.js';
 
 await connectDb(config.MONGODB_URI);
+startMonitor();
 if (config.WORKER_ENABLED) {
   await startBuildWorker();
 } else {

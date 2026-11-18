@@ -664,3 +664,11 @@ code.mono {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.service-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  font-weight: 500;
+}

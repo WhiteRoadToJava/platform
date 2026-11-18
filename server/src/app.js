@@ -10,6 +10,7 @@ import { internalRouter } from './routes/internal.js';
 import { variablesRouter } from './routes/variables.js';
 import { environmentsRouter } from './routes/environments.js';
 import { deploymentsRouter } from './routes/deployments.js';
+import { statusRouter } from './routes/status.js';
 
 export function createApp() {
   const app = express();
@@ -28,6 +29,7 @@ export function createApp() {
   app.use('/api', variablesRouter);
   app.use('/api', environmentsRouter);
   app.use('/api', deploymentsRouter);
+  app.use('/api', statusRouter);
 
   app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Not found' });

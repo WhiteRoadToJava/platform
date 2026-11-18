@@ -1,7 +1,7 @@
 import { Link, useOutletContext } from 'react-router';
 
 export default function ProjectsHome() {
-  const { projects, projectsLoading } = useOutletContext();
+  const { projects, projectsLoading, status } = useOutletContext();
 
   if (projectsLoading && !projects) return <p className="muted">Loading projects…</p>;
 
@@ -33,11 +33,13 @@ export default function ProjectsHome() {
       <ul className="rows">
         {projects.map((project) => (
           <li key={project._id} className="row">
-            <span className="lamp" aria-hidden="true" />
+            <span className="lamp" data-state={status?.projects(project._id)} aria-hidden="true" />
             <Link to={`/projects/${project._id}`} className="row-title">
               {project.name}
             </Link>
-            <span className="row-meta">{project.baseDomain}</span>
+            <span className="row-meta">
+              {status?.services[service._id]?.label ?? 'Checking…'} · {serviceAddress(service, project.baseDomain)}
+            </span>
             <span className="row-aside">
               {project.services.length} {project.services.length === 1 ? 'service' : 'services'}
             </span>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 import { api } from '../api.js';
 import { slugify, useApi } from '../hooks.js';
 import VariablesPanel from '../components/VariablesPanel.jsx';
@@ -32,6 +32,8 @@ export default function ServiceForm() {
   const { projectId, serviceId } = useParams();
   const editing = Boolean(serviceId);
   const navigate = useNavigate();
+  const { status } = useOutletContext();
+  const live = editing ? status?.services[serviceId] : null;
   const source = useApi(editing ? `/services/${serviceId}` : `/projects/${projectId}`);
   const [form, setForm] = useState(null);
   const [volumesText, setVolumesText] = useState('');
@@ -115,6 +117,12 @@ export default function ServiceForm() {
     <div className="page">
       <h1>{editing ? form.name || 'Service' : 'Add service'}</h1>
       <p className="muted">In {project.name}</p>
+      {live && (
+        <p className="service-status">
+          <span className="lamp" data-state={live.lamp} aria-hidden="true" />
+          {live.label}
+        </p>
+      )}
 
       {editing && <DeploymentsPanel serviceId={serviceId} />}
 

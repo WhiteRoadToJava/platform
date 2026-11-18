@@ -1,14 +1,21 @@
 import { Link, NavLink, Outlet } from 'react-router';
 import { api } from './api.js';
 import { useApi } from './hooks.js';
+import { useEffect } from 'react';
 
 export default function Shell({ onSignedOut }) {
+  const status = useApi('/status');
   const projects = useApi('/projects');
 
   async function signOut() {
     await api('/auth/logout', { method: 'POST' }).catch(() => {});
     onSignedOut();
   }
+
+  useEffect(() => {
+    const timer = setInterval(status.reload, 10000);
+    return () => clearInterval(timer);
+  }, [status.reload]);
 
   return (
     <div className="shell">
@@ -23,7 +30,7 @@ export default function Shell({ onSignedOut }) {
               {projects.data.map((project) => (
                 <li key={project._id}>
                   <NavLink to={`/projects/${project._id}`} className="nav-link">
-                    <span className="lamp" aria-hidden="true" />
+                    <span className="lamp" data-status={status.data?.projects(project._id)} aria-hidden="true" />
                     {project.name}
                   </NavLink>
                 </li>
@@ -48,6 +55,7 @@ export default function Shell({ onSignedOut }) {
             projects: projects.data,
             projectsLoading: projects.loading,
             reloadProjects: projects.reload,
+            status: status.data,
           }}
         />
       </main>

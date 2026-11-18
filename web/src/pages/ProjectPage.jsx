@@ -7,7 +7,7 @@ import DatabasePanel from '../components/DatabasePanel.jsx';
 export default function ProjectPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { reloadProjects } = useOutletContext();
+    const { reloadProjects, status } = useOutletContext();
   const { data: project, error, loading, reload } = useApi(`/projects/${projectId}`);
   const [deleteError, setDeleteError] = useState(null);
 
