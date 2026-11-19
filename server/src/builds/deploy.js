@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { run } from '../lib/process.js';
 import { resolveVariables } from '../lib/variables.js';
 import { containerName } from '../routing/traefik.js';
+import { saveContainerLogs } from '../monitor/logs.js';
 
 async function exists(file) {
   try {
@@ -170,6 +171,10 @@ export async function deployContainer({ deployment, service, project, environmen
   }
 
   step('Switching traffic to the new container');
-  if (current) await run('docker', ['rm', '-f', name], { log });
+    if (current) {
+    await saveContainerLogs(name, current.Config.Labels?.['platform.deployment'], 'replaced');
+    log.write('Saved the last 500 log lines of the previous version\n');
+    await run('docker', ['rm', '-f', name], { log });
+  }
   await run('docker', ['rename', nextName, name], { log });
 }

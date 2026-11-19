@@ -53,7 +53,7 @@ export default function DeploymentPage() {
   }
 
   const deployment = info.data;
-    const currentStatus = status || deployment?.status || 'queued';
+  const currentStatus = status || deployment?.status || 'queued';
   const current = DEPLOYMENT_STATUS[currentStatus] ?? { label: currentStatus };
   return (
     <div className="page page-wide">
@@ -76,6 +76,45 @@ export default function DeploymentPage() {
       <pre className="log" ref={logRef} onScroll={handleScroll}>
         {log || 'Waiting for the build to start…'}
       </pre>
+      <SavedLogs deploymentId={deploymentId} />
     </div>
+  );
+}
+
+
+function SavedLogs({ deploymentId }) {
+  const saved = useApi(`/deployments/${deploymentId}/saved-logs`);
+  const [openName, setOpenName] = useState(null);
+  const [text, setText] = useState('');
+
+  if (!saved.data?.length) return null;
+
+  async function toggle(name) {
+    if (openName === name) {
+      setOpenName(null);
+      return;
+    }
+    const data = await api(`/deployments/${deploymentId}/saved-logs/${encodeURIComponent(name)}`);
+    setText(data.text);
+    setOpenName(name);
+  }
+
+  return (
+    <section className="panel-section">
+      <h2 className="section-title">Saved runtime logs</h2>
+      <p className="muted">Saved when this version crashed or was replaced by a newer deployment.</p>
+      <ul className="rows">
+        {saved.data.map((file) => (
+          <li key={file.name} className="row">
+            <span className="lamp" data-state={file.reason === 'crash' ? 'fail' : undefined} aria-hidden="true" />
+            <button className="row-title button-plain" type="button" onClick={() => toggle(file.name)}>
+              {file.reason === 'crash' ? 'Crash' : 'Replaced by a newer version'}
+            </button>
+            <span className="row-aside">{formatTime(file.at)}</span>
+          </li>
+        ))}
+      </ul>
+      {openName && <pre className="log log-short">{text}</pre>}
+    </section>
   );
 }

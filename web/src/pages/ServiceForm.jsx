@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { slugify, useApi } from '../hooks.js';
 import VariablesPanel from '../components/VariablesPanel.jsx';
 import DeploymentsPanel from '../components/DeploymentsPanel.jsx';
+import LogsPanel from '../components/LogsPanel.jsx';
 
 const DEFAULTS = {
   name: '',
@@ -125,6 +126,7 @@ export default function ServiceForm() {
       )}
 
       {editing && <DeploymentsPanel serviceId={serviceId} />}
+      {editing && <LogsPanel serviceId={serviceId} />}
 
       <form className="form" onSubmit={handleSubmit}>
         <fieldset>
