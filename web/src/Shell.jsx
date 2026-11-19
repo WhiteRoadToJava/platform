@@ -30,8 +30,7 @@ export default function Shell({ onSignedOut }) {
               {projects.data.map((project) => (
                 <li key={project._id}>
                   <NavLink to={`/projects/${project._id}`} className="nav-link">
-                    <span className="lamp" data-status={status.data?.projects(project._id)} aria-hidden="true" />
-                    {project.name}
+                    <span className="lamp" data-state={status.data?.projects[project._id]} aria-hidden="true" />                    {project.name}
                   </NavLink>
                 </li>
               ))}

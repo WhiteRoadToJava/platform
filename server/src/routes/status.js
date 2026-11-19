@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import {getStatus} from '../monitor/contauners.js'
+import {getStatus} from '../monitor/containers.js'
 
 export const statusRouter = Router();
 

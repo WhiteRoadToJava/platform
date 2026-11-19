@@ -7,7 +7,7 @@ import DatabasePanel from '../components/DatabasePanel.jsx';
 export default function ProjectPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
-    const { reloadProjects, status } = useOutletContext();
+  const { reloadProjects, status } = useOutletContext();
   const { data: project, error, loading, reload } = useApi(`/projects/${projectId}`);
   const [deleteError, setDeleteError] = useState(null);
 
@@ -42,9 +42,12 @@ export default function ProjectPage() {
         <ul className="rows">
           {project.services.map((service) => (
             <li key={service._id} className="row">
-              <span className="lamp" aria-hidden="true" />
+              <span className="lamp" data-state={status?.services[service._id]?.lamp} aria-hidden="true" />
               <Link to={`/services/${service._id}`} className="row-title">
                 {service.name}
+                <span className="row-meta">
+                  {status?.services[service._id]?.label ?? 'Checking…'} · {serviceAddress(service, project.baseDomain)}
+                </span>
               </Link>
               <span className="row-meta mono">{serviceAddress(service, project.baseDomain)}</span>
               <span className="row-aside mono">{repoLabel(service)}</span>
