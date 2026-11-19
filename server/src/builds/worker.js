@@ -4,6 +4,7 @@ import path from 'node:path';
 import { config } from '../config.js';
 import { Deployment } from '../models/Deployment.js';
 import { Environment } from '../models/Environment.js';
+import { markActive } from '../lib/lifecycle.js';
 import { Project } from '../models/Project.js';
 import { Service } from '../models/Service.js';
 import { run } from '../lib/process.js';
@@ -91,6 +92,7 @@ async function runDeployment(deployment) {
       { status: 'superseded' },
     );
     deployment.status = 'running';
+    await markActive(environment);
     step('Deployment is live');
   } catch (err) {
     deployment.status = 'failed';

@@ -106,3 +106,25 @@ export async function copyDatabase(sourceEnvironment, targetEnvironment) {
     await Promise.all([sourceClient.close(), targetClient.close()]);
   }
 }
+
+
+export async function removeDatabase(environment) {
+  if (environment.kind === 'production') throw new HttpError(400, 'The production database is never removed here.');
+  if (!environment.database?.name) return;
+
+  const client = connectAs(environment);
+  try {
+    const database = client.db(environment.database.name);
+    for (const { name } of await database.listCollections({ type: 'collection' }).toArray()) {
+      if (!name.startsWith('system.')) await database.collection(name).drop();
+    }
+  } finally {
+    await client.close();
+  }
+
+  try {
+    await mongoose.connection.getClient().db('admin').command({ dropUser: environment.database.username });
+  } catch (err) {
+    if (err.code !== 11) throw err;
+  }
+}

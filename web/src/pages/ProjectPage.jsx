@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { envQuery, repoLabel, serviceAddress, useApi, useEnvironment } from '../hooks.js';
 import DatabasePanel from '../components/DatabasePanel.jsx';
 import EnvironmentBar from '../components/EnvironmentBar.jsx';
+import EnvironmentActions from '../components/EnvironmentActions.jsx';
 
 export default function ProjectPage() {
   const { projectId } = useParams();
@@ -69,6 +70,18 @@ export default function ProjectPage() {
         <div className="empty">
           <p>No services yet. Add one for each GitHub repository in this app, such as the frontend and the backend.</p>
         </div>
+      )}
+
+            {environment?.kind === 'preview' && (
+        <EnvironmentActions
+          key={`a-${environment._id}`}
+          environment={environment}
+          onChange={reload}
+          onDeleted={async () => {
+            select('production');
+            await reload();
+          }}
+        />
       )}
 
       {environment && <DatabasePanel key={environment._id} environment={environment} onChange={reload} />}

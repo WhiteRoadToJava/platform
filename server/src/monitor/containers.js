@@ -48,8 +48,7 @@ async function check() {
   const [containers, services, environments, active] = await Promise.all([
     inspectManagedContainers(),
     Service.find().select('project name').lean(),
-    Environment.find().select('project kind').lean(),
-    Deployment.find({ status: { $in: ACTIVE } }).select('service environment').lean(),
+    Environment.find().select('project kind stoppedAt').lean(), Deployment.find({ status: { $in: ACTIVE } }).select('service environment').lean(),
   ]);
 
   const productionOf = new Map(
@@ -77,8 +76,9 @@ async function check() {
       const container = byKey.get(key);
       const record = observed.get(key) ?? {};
 
+      const stopped = Boolean(environment.stoppedAt);
       if (container) {
-        if (detectCrash(container, record)) {
+        if (!stopped && detectCrash(container, record)) {
           record.lastCrashAt = Date.now();
           monitorEvents.emit('crash', { service, environment, container });
         }
@@ -87,8 +87,10 @@ async function check() {
         record.status = container.State.Status;
       }
 
-      const status = describe(container, record, deploying.has(key));
-      if (record.lamp === 'fail' && status.lamp === 'ok') monitorEvents.emit('recover', { service, environment });
+      const status =
+        stopped && !deploying.has(key)
+          ? { lamp: 'none', label: 'Stopped to save memory' }
+          : describe(container, record, deploying.has(key)); if (record.lamp === 'fail' && status.lamp === 'ok') monitorEvents.emit('recover', { service, environment });
       record.lamp = status.lamp;
       observed.set(key, record);
 

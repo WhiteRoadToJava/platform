@@ -6,6 +6,9 @@ const environmentSchema = new mongoose.Schema(
     name: { type: String, required: true },
     kind: { type: String, enum: ['production', 'preview'], required: true },
     branch: String,
+    activeAt: Date,
+    stoppedAt: Date,
+    stopReason: { type: String, enum: ['auto', 'manual'] },
     database: {
       name: String,
       username: String,

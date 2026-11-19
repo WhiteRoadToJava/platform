@@ -4,6 +4,7 @@ import { Environment } from '../models/Environment.js';
 import { Project } from '../models/Project.js';
 import { copyDatabase, provisionDatabase } from '../lib/databases.js';
 import { productionEnvironment } from '../lib/environments.js';
+import { deleteEnvironment, startEnvironment, stopEnvironment } from '../lib/lifecycle.js';
 import { run } from '../lib/process.js';
 import { HttpError, parseBody, slug } from '../lib/validation.js';
 
@@ -19,6 +20,7 @@ const environmentInput = z.object({
     .max(100),
 });
 const refreshInput = z.object({ confirm: z.string() });
+const deleteInput = z.object({ confirm: z.string(), deleteData: z.boolean() });
 
 const refreshing = new Set();
 
@@ -74,4 +76,33 @@ environmentsRouter.post('/environments/:id/database/refresh', async (req, res) =
   } finally {
     refreshing.delete(key);
   }
+});
+
+
+async function loadEnvironment(id) {
+  const environment = await Environment.findById(id);
+  if (!environment) throw new HttpError(404, 'Environment not found.');
+  return environment;
+}
+
+environmentsRouter.post('/environments/:id/stop', async (req, res) => {
+  const environment = await loadEnvironment(req.params.id);
+  const stopped = await stopEnvironment(environment, 'manual');
+  if (!stopped) throw new HttpError(409, `Nothing is running in ${environment.name}.`);
+  res.json({ stopped });
+});
+
+environmentsRouter.post('/environments/:id/start', async (req, res) => {
+  const environment = await loadEnvironment(req.params.id);
+  const started = await startEnvironment(environment);
+  res.json({ started });
+});
+
+environmentsRouter.delete('/environments/:id', async (req, res) => {
+  const environment = await loadEnvironment(req.params.id);
+  const { confirm, deleteData } = parseBody(deleteInput, req.body);
+  if (confirm !== environment.name) throw new HttpError(400, `Type ${environment.name} to confirm.`);
+  const project = await Project.findById(environment.project);
+  await deleteEnvironment(environment, project, { deleteData });
+  res.json({ ok: true });
 });

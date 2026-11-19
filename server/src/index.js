@@ -6,11 +6,13 @@ import { startBuildWorker } from './builds/worker.js';
 import { monitorEvents, startMonitor } from './monitor/containers.js';
 import { saveContainerLogs } from './monitor/logs.js';
 import { startSystemMonitor } from './monitor/system.js';
+import { startAutoStop } from './monitor/autostop.js';
 
 
 await connectDb(config.MONGODB_URI);
 startMonitor();
 startSystemMonitor();
+startAutoStop();
 monitorEvents.on('crash', ({ container }) => {
   const name = container.Name.replace(/^\//, '');
   saveContainerLogs(name, container.Config.Labels?.['platform.deployment'], 'crash');
