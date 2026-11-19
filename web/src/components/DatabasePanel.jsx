@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { api } from '../api.js';
+import { formatTime } from '../hooks.js';
+import RefreshDatabase from './RefreshDatabase.jsx';
+
 
 const REFERENCES = ['db.uri', 'db.name', 'db.user', 'db.password', 'db.host'];
 
@@ -33,6 +36,14 @@ export default function DatabasePanel({ environment, onChange }) {
             <dd className="mono">{database.username}</dd>
             <dt>Password</dt>
             <dd>Generated and encrypted. Your services receive it through references.</dd>
+            {environment.kind === 'preview' && (
+              <>
+                <dt>Data</dt>
+                <dd>
+                  {database.refreshedAt ? `Copied from production ${formatTime(database.refreshedAt)}` : 'Empty, never copied from production'}
+                </dd>
+              </>
+            )}
           </dl>
           <p className="muted">
             Use these references in a service's variables:{' '}
@@ -43,6 +54,7 @@ export default function DatabasePanel({ environment, onChange }) {
               </span>
             ))}
           </p>
+          {environment.kind === 'preview' && <RefreshDatabase environment={environment} onChange={onChange} />}
         </>
       ) : (
         <div className="empty">

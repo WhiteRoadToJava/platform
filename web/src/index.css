@@ -807,3 +807,9 @@ code.mono {
   background: var(--surface);
   font-size: 14px;
 }
+
+.refresh-db {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}

@@ -10,6 +10,7 @@ const environmentSchema = new mongoose.Schema(
       name: String,
       username: String,
       passwordEncrypted: String,
+      refreshedAt: Date,
     },
   },
   { timestamps: true },
