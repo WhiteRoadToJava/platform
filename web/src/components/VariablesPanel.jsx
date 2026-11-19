@@ -6,11 +6,13 @@ const SOURCE_LABELS = {
   yours: 'Set here',
   reference: 'Uses a reference',
   platform: 'Added by the platform',
+  inherited: 'Inherited from production',
 };
 
-export default function VariablesPanel({ serviceId }) {
-  const list = useApi(`/services/${serviceId}/variables`);
-  const resolved = useApi(`/services/${serviceId}/variables/resolved`);
+export default function VariablesPanel({ serviceId, environmentId }) {
+  const query = environmentId ? `?environmentId=${environmentId}` : '';
+  const list = useApi(`/services/${serviceId}/variables${query}`);
+  const resolved = useApi(`/services/${serviceId}/variables/resolved${query}`);
   const [revealed, setRevealed] = useState({});
   const [editing, setEditing] = useState(null);
   const [newKey, setNewKey] = useState('');
@@ -27,7 +29,7 @@ export default function VariablesPanel({ serviceId }) {
   async function save(key, value) {
     setError(null);
     try {
-      await api(`/services/${serviceId}/variables`, { method: 'PUT', body: JSON.stringify({ key, value }) });
+      await api(`/services/${serviceId}/variables`, { method: 'PUT', body: JSON.stringify({ key, value, environmentId }) });
       setEditing(null);
       await refresh();
       return true;
@@ -51,6 +53,20 @@ export default function VariablesPanel({ serviceId }) {
     setEditing({ key: variable.key, value });
   }
 
+
+  async function toggleSensitive(variable) {
+    setError(null);
+    try {
+      await api(`/variables/${variable._id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sensitive: !variable.sensitive }),
+      });
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   async function remove(variable) {
     if (!window.confirm(`Delete ${variable.key}?`)) return;
     await api(`/variables/${variable._id}`, { method: 'DELETE' });
@@ -71,7 +87,7 @@ export default function VariablesPanel({ serviceId }) {
     try {
       await api(`/services/${serviceId}/variables/import`, {
         method: 'POST',
-        body: JSON.stringify({ text: importText }),
+        body: JSON.stringify({ text: importText, environmentId }),
       });
       setImportText('');
       setImportOpen(false);
@@ -90,7 +106,10 @@ export default function VariablesPanel({ serviceId }) {
         <ul className="rows var-list">
           {list.data.map((variable) => (
             <li key={variable._id} className="var-row">
-              <span className="mono var-key">{variable.key}</span>
+              <span className="mono var-key">
+                {variable.key}
+                {variable.sensitive && <span className="tag">Sensitive</span>}
+              </span>
               {editing?.key === variable.key ? (
                 <form
                   className="inline-form"
@@ -121,6 +140,9 @@ export default function VariablesPanel({ serviceId }) {
                     </button>
                     <button className="button-small" type="button" onClick={() => startEdit(variable)}>
                       Edit
+                    </button>
+                    <button className="button-small" type="button" onClick={() => toggleSensitive(variable)}>
+                      {variable.sensitive ? 'Not sensitive' : 'Mark sensitive'}
                     </button>
                     <button className="button-small" type="button" onClick={() => remove(variable)}>
                       Delete

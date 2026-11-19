@@ -1,14 +1,37 @@
+import { Environment } from '../models/Environment.js';
 import { Variable } from '../models/Variable.js';
 import { decrypt } from './crypto.js';
 import { databaseReferences } from './databases.js';
 
 const REFERENCE = /\$\{\{\s*([a-z.]+)\s*\}\}/g;
 
+async function inheritedVariables(service, environment, ownKeys, warnings) {
+  if (environment.kind === 'production') return [];
+  const production = await Environment.findOne({ project: service.project, kind: 'production' }).lean();
+  if (!production) return [];
+
+  const fromProduction = await Variable.find({ service: service._id, environment: production._id }).lean();
+  const inherited = [];
+  for (const variable of fromProduction) {
+    if (ownKeys.has(variable.key)) continue;
+    if (variable.sensitive) {
+      warnings.push(
+        `${variable.key} is sensitive, so it is not copied from production. Set a value for ${environment.name} if the app needs it.`,
+      );
+      continue;
+    }
+    inherited.push({ ...variable, inherited: true });
+  }
+  return inherited;
+}
+
 export async function resolveVariables(service, environment) {
-  const stored = await Variable.find({ service: service._id, environment: environment._id }).lean();
+  const own = await Variable.find({ service: service._id, environment: environment._id }).lean();
   const variables = new Map();
   const errors = [];
   const warnings = [];
+  const inherited = await inheritedVariables(service, environment, new Set(own.map((v) => v.key)), warnings);
+  const stored = [...inherited, ...own];
 
   let refs = {};
   try {
@@ -43,7 +66,8 @@ export async function resolveVariables(service, environment) {
     if (!value.trim()) {
       warnings.push(`${variable.key} is empty. Most apps treat an empty value as missing.`);
     }
-    variables.set(variable.key, { value, source: usesReference ? 'reference' : 'yours' });
+    const source = variable.inherited ? 'inherited' : usesReference ? 'reference' : 'yours';
+    variables.set(variable.key, { value, source });
   }
 
   return { variables, errors, warnings };

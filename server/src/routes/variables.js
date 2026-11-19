@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Service } from '../models/Service.js';
 import { Variable } from '../models/Variable.js';
 import { decrypt, encrypt } from '../lib/crypto.js';
-import { productionEnvironment } from '../lib/environments.js';
+import { environmentFor } from '../lib/environments.js';
 import { resolveVariables } from '../lib/variables.js';
 import { HttpError, parseBody } from '../lib/validation.js';
 
@@ -13,23 +13,26 @@ const KEY_MESSAGE = 'Use letters, numbers and underscores, starting with a lette
 const variableInput = z.object({
   key: z.string().trim().regex(KEY_PATTERN, KEY_MESSAGE).max(128),
   value: z.string().max(32768),
+  sensitive: z.boolean().optional(),
 });
+
+const sensitiveInput = z.object({ sensitive: z.boolean() });
 
 const importInput = z.object({ text: z.string().max(200000) });
 
-async function loadContext(serviceId) {
+async function loadContext(serviceId, environmentId) {
   const service = await Service.findById(serviceId);
   if (!service) throw new HttpError(404, 'Service not found.');
-  const environment = await productionEnvironment(service.project);
+  const environment = await environmentFor(service.project, environmentId);
   return { service, environment };
 }
 
-async function upsertVariable(service, environment, key, value) {
-  await Variable.findOneAndUpdate(
-    { service: service._id, environment: environment._id, key },
-    { valueEncrypted: encrypt(value) },
-    { upsert: true },
-  );
+async function upsertVariable(service, environment, key, value, sensitive) {
+  const update = { valueEncrypted: encrypt(value) };
+  if (sensitive !== undefined) update.sensitive = sensitive;
+  await Variable.findOneAndUpdate({ service: service._id, environment: environment._id, key }, update, {
+    upsert: true,
+  });
 }
 
 function parseEnvText(text) {
@@ -52,23 +55,23 @@ function parseEnvText(text) {
 export const variablesRouter = Router();
 
 variablesRouter.get('/services/:id/variables', async (req, res) => {
-  const { service, environment } = await loadContext(req.params.id);
+  const { service, environment } = await loadContext(req.params.id, req.query.environmentId);
   const variables = await Variable.find({ service: service._id, environment: environment._id })
-    .select('key updatedAt')
+    .select('key sensitive updatedAt')
     .sort({ key: 1 })
     .lean();
   res.json(variables);
 });
 
 variablesRouter.put('/services/:id/variables', async (req, res) => {
-  const { service, environment } = await loadContext(req.params.id);
-  const { key, value } = parseBody(variableInput, req.body);
-  await upsertVariable(service, environment, key, value);
+  const { service, environment } = await loadContext(req.params.id, req.body?.environmentId);
+  const { key, value, sensitive } = parseBody(variableInput, req.body);
+  await upsertVariable(service, environment, key, value, sensitive);
   res.json({ ok: true });
 });
 
 variablesRouter.post('/services/:id/variables/import', async (req, res) => {
-  const { service, environment } = await loadContext(req.params.id);
+  const { service, environment } = await loadContext(req.params.id, req.body?.environmentId);
   const { text } = parseBody(importInput, req.body);
   const entries = parseEnvText(text);
   if (!entries.length) throw new HttpError(400, 'No variables found. Paste lines like KEY=value.');
@@ -79,11 +82,12 @@ variablesRouter.post('/services/:id/variables/import', async (req, res) => {
 });
 
 variablesRouter.get('/services/:id/variables/resolved', async (req, res) => {
-  const { service, environment } = await loadContext(req.params.id);
-  const { variables, errors, warnings } = await resolveVariables(service, environment); const list = [...variables.entries()]
+  const { service, environment } = await loadContext(req.params.id, req.query.environmentId);
+  const { variables, errors, warnings } = await resolveVariables(service, environment);
+  const list = [...variables.entries()]
     .map(([key, { source }]) => ({ key, source }))
     .sort((a, b) => a.key.localeCompare(b.key));
-    res.json({ variables: list, errors, warnings });
+  res.json({ variables: list, errors, warnings });
 });
 
 variablesRouter.get('/variables/:id/value', async (req, res) => {
@@ -96,9 +100,15 @@ variablesRouter.get('/variables/:id/value', async (req, res) => {
   }
 });
 
+variablesRouter.patch('/variables/:id', async (req, res) => {
+  const { sensitive } = parseBody(sensitiveInput, req.body);
+  const variable = await Variable.findByIdAndUpdate(req.params.id, { sensitive }, { returnDocument: 'after' });
+  if (!variable) throw new HttpError(404, 'Variable not found.');
+  res.json({ ok: true });
+});
+
 variablesRouter.delete('/variables/:id', async (req, res) => {
   const variable = await Variable.findByIdAndDelete(req.params.id);
   if (!variable) throw new HttpError(404, 'Variable not found.');
   res.json({ ok: true });
 });
-

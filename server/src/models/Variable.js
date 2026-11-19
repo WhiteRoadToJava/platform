@@ -6,6 +6,7 @@ const variableSchema = new mongoose.Schema(
     environment: { type: mongoose.Schema.Types.ObjectId, ref: 'Environment', required: true },
     key: { type: String, required: true },
     valueEncrypted: { type: String, required: true },
+    sensitive: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
