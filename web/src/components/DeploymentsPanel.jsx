@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router';
 import { api } from '../api.js';
 import { ACTIVE_STATUSES, DEPLOYMENT_STATUS, formatTime, useApi } from '../hooks.js';
 
-export default function DeploymentsPanel({ serviceId }) {
+export default function DeploymentsPanel({ serviceId, environmentId }) {
   const navigate = useNavigate();
-  const deployments = useApi(`/services/${serviceId}/deployments`);
+  const deployments = useApi(`/services/${serviceId}/deployments?environmentId=${environmentId}`);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -21,7 +21,10 @@ export default function DeploymentsPanel({ serviceId }) {
     setBusy(true);
     setError(null);
     try {
-      const deployment = await api(`/services/${serviceId}/deployments`, { method: 'POST' });
+      const deployment = await api(`/services/${serviceId}/deployments`, {
+        method: 'POST',
+        body: JSON.stringify({ environmentId }),
+      });
       const status = DEPLOYMENT_STATUS[deployment.status] ?? { label: deployment.status };
       navigate(`/deployments/${deployment._id}`);
     } catch (err) {

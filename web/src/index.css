@@ -757,3 +757,53 @@ code.mono {
 .meter-fill[data-state='fail'] {
   background: var(--fail);
 }
+
+/* Environments */
+
+.env-bar {
+  margin-bottom: 24px;
+}
+
+.env-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.env-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.env-tab[aria-selected='true'] {
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--action-ink);
+}
+
+.env-branch {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.env-form {
+  margin-top: 12px;
+}
+
+.env-note {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--busy);
+  background: var(--surface);
+  font-size: 14px;
+}

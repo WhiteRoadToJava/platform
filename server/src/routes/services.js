@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { Environment } from '../models/Environment.js';
 import { Project } from '../models/Project.js';
 import { Service } from '../models/Service.js';
 import { Variable } from '../models/Variable.js';
@@ -65,9 +66,12 @@ servicesRouter.post('/projects/:projectId/services', async (req, res) => {
 });
 
 servicesRouter.get('/services/:id', async (req, res) => {
-  const service = await Service.findById(req.params.id).populate('project').lean();
+    const service = await Service.findById(req.params.id).populate('project').lean();
   if (!service) throw new HttpError(404, 'Service not found.');
-  res.json(service);
+  const environments = await Environment.find({ project: service.project._id })
+    .select('-database.passwordEncrypted')
+    .lean();
+  res.json({ ...service, environments });
 });
 
 servicesRouter.put('/services/:id', async (req, res) => {

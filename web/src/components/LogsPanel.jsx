@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 
-export default function LogsPanel({ serviceId }) {
+export default function LogsPanel({serviceId, environmentId }) {
   const [text, setText] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,7 +10,7 @@ export default function LogsPanel({ serviceId }) {
 
   const load = useCallback(async () => {
     try {
-      const data = await api(`/services/${serviceId}/logs`);
+      const data = await api(`/services/${serviceId}/logs?environmentId=${environmentId}`);
       setText(data.text);
       setError(null);
     } catch (err) {
@@ -18,7 +18,7 @@ export default function LogsPanel({ serviceId }) {
     } finally {
       setLoading(false);
     }
-  }, [serviceId]);
+  }, [serviceId, environmentId]);
 
   useEffect(() => {
     load();

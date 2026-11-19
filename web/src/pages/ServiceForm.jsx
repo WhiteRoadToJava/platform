@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 import { api } from '../api.js';
-import { slugify, useApi } from '../hooks.js';
+import { slugify, useApi, useEnvironment } from '../hooks.js';
 import VariablesPanel from '../components/VariablesPanel.jsx';
 import DeploymentsPanel from '../components/DeploymentsPanel.jsx';
 import LogsPanel from '../components/LogsPanel.jsx';
+import EnvironmentBar from '../components/EnvironmentBar.jsx';
 
 const DEFAULTS = {
   name: '',
@@ -34,8 +35,9 @@ export default function ServiceForm() {
   const editing = Boolean(serviceId);
   const navigate = useNavigate();
   const { status } = useOutletContext();
-  const live = editing ? status?.services[serviceId] : null;
   const source = useApi(editing ? `/services/${serviceId}` : `/projects/${projectId}`);
+  const { environments, environment, select } = useEnvironment(source.data?.environments);
+  const live = editing && environment ? status?.byEnvironment[`${serviceId}:${environment._id}`] : null;
   const [form, setForm] = useState(null);
   const [volumesText, setVolumesText] = useState('');
   const [slugEdited, setSlugEdited] = useState(editing);
@@ -46,8 +48,7 @@ export default function ServiceForm() {
   useEffect(() => {
     if (!source.data) return;
     if (editing) {
-      const { _id, project, createdAt, updatedAt, __v, volumes, ...fields } = source.data;
-      setForm(fields);
+      const { _id, project, environments, createdAt, updatedAt, __v, volumes, ...fields } = source.data; setForm(fields);
       setVolumesText(volumes.map((v) => v.containerPath).join('\n'));
       setDomainsText((fields.customDomains ?? []).join('\n'));
     } else {
@@ -125,9 +126,18 @@ export default function ServiceForm() {
         </p>
       )}
 
-      {editing && <DeploymentsPanel serviceId={serviceId} />}
-      {editing && <LogsPanel serviceId={serviceId} />}
+      {editing && environment && (
+        <>
+          <EnvironmentBar environments={environments} current={environment} onSelect={select} />
+          <DeploymentsPanel key={`d-${environment._id}`} serviceId={serviceId} environmentId={environment._id} />
+          <LogsPanel key={`l-${environment._id}`} serviceId={serviceId} environmentId={environment._id} />
+        </>
+      )}
 
+      <h2 className="section-title">Settings</h2>
+      {environment?.kind === 'preview' && (
+        <p className="muted">These settings are shared by every environment. Variables below belong to {environment.name}.</p>
+      )}
       <form className="form" onSubmit={handleSubmit}>
         <fieldset>
           <legend>Source</legend>
@@ -164,6 +174,7 @@ export default function ServiceForm() {
             <div className="field">
               <label htmlFor="branch">Branch</label>
               <input id="branch" className="mono" value={form.branch} onChange={(e) => update('branch', e.target.value)} required />
+              <span className="field-hint">Production deploys this branch. Other environments use their own.</span>
             </div>
             <div className="field">
               <label htmlFor="buildType">Build</label>
@@ -303,7 +314,9 @@ export default function ServiceForm() {
           </Link>
         </div>
       </form>
-      {editing && <VariablesPanel serviceId={serviceId} />}
+      {editing && environment && (
+        <VariablesPanel key={`v-${environment._id}`} serviceId={serviceId} environmentId={environment._id} />
+      )}
       {editing && (
         <div className="danger-zone">
           <p className="muted">Deleting a service removes its settings.</p>

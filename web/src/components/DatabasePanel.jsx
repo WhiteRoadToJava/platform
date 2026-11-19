@@ -3,11 +3,10 @@ import { api } from '../api.js';
 
 const REFERENCES = ['db.uri', 'db.name', 'db.user', 'db.password', 'db.host'];
 
-export default function DatabasePanel({ project, onChange }) {
+export default function DatabasePanel({ environment, onChange }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const environment = project.environments.find((env) => env.kind === 'production');
-  const database = environment?.database;
+  const database = environment.database;
 
   async function createDatabase() {
     setBusy(true);
@@ -48,8 +47,9 @@ export default function DatabasePanel({ project, onChange }) {
       ) : (
         <div className="empty">
           <p>
-            This project has no database yet. Create one to get a MongoDB database and its own user with a generated
-            password.
+            {environment.kind === 'production'
+              ? 'This project has no database yet. Create one to get a MongoDB database and its own user with a generated password.'
+              : `${environment.name} has no database yet. Create one to give it its own empty MongoDB database, separate from production.`}
           </p>
           <button className="button-primary" type="button" onClick={createDatabase} disabled={busy}>
             {busy ? 'Creating…' : 'Create database'}

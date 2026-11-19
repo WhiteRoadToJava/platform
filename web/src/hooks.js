@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './api.js';
+import { useSearchParams } from 'react-router';
 
 export function useApi(path) {
   const [state, setState] = useState({ data: null, error: null, loading: true });
@@ -31,19 +32,47 @@ export function slugify(text) {
     .replace(/-+$/, '');
 }
 
-export function serviceAddress(service, baseDomain) {
+export function serviceHosts(service, project, environment) {
   const hosts = [
-    ...(service.subdomain ? [`${service.subdomain}.${baseDomain}`] : []),
+    ...(service.subdomain ? [`${service.subdomain}.${project.baseDomain}`] : []),
     ...(service.customDomains ?? []),
   ];
+  if (!environment || environment.kind === 'production' || !hosts.length) return hosts;
+  return [`${environment.name}-${service.subdomain || project.slug}.${project.baseDomain}`];
+}
+
+export function serviceAddress(service, project, environment) {
+  const hosts = serviceHosts(service, project, environment);
   if (!hosts.length) return 'No public address';
   const extra = hosts.length > 1 ? ` and ${hosts.length - 1} more` : '';
   return `${hosts[0]}${service.pathPrefix}${extra}`;
 }
 
-export function repoLabel(service) {
-  return `${service.repoUrl.replace('https://github.com/', '')} (${service.branch})`;
+export function repoLabel(service, environment) {
+  const branch = environment?.kind === 'preview' ? environment.branch : service.branch;
+  return `${service.repoUrl.replace('https://github.com/', '')} (${branch})`;
 }
+
+export function useEnvironment(environments) {
+  const [params, setParams] = useSearchParams();
+  const sorted = [...(environments ?? [])].sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === 'production' ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  const wanted = params.get('env');
+  const environment = sorted.find((env) => env.name === wanted) ?? sorted[0] ?? null;
+
+  function select(name) {
+    setParams(name === 'production' ? {} : { env: name }, { replace: true });
+  }
+
+  return { environments: sorted, environment, select };
+}
+
+export function envQuery(environment) {
+  return environment && environment.kind !== 'production' ? `?env=${environment.name}` : '';
+}
+
 
 export const DEPLOYMENT_STATUS = {
   queued: { label: 'Queued', lamp: 'busy' },
