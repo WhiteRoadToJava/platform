@@ -5,10 +5,12 @@ import mongoose from 'mongoose';
 import { startBuildWorker } from './builds/worker.js';
 import { monitorEvents, startMonitor } from './monitor/containers.js';
 import { saveContainerLogs } from './monitor/logs.js';
+import { startSystemMonitor } from './monitor/system.js';
 
 
 await connectDb(config.MONGODB_URI);
 startMonitor();
+startSystemMonitor();
 monitorEvents.on('crash', ({ container }) => {
   const name = container.Name.replace(/^\//, '');
   saveContainerLogs(name, container.Config.Labels?.['platform.deployment'], 'crash');

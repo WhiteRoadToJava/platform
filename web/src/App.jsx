@@ -8,6 +8,7 @@ import NewProject from './pages/NewProject.jsx';
 import ProjectPage from './pages/ProjectPage.jsx';
 import ServiceForm from './pages/ServiceForm.jsx';
 import DeploymentPage from './pages/DeploymentPage.jsx';
+import SystemPage from './pages/SystemPage.jsx';
 
 export default function App() {
   const [auth, setAuth] = useState('checking');
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="projects/:projectId/services/new" element={<ServiceForm />} />
           <Route path="services/:serviceId" element={<ServiceForm />} />
           <Route path="deployments/:deploymentId" element={<DeploymentPage />} />
+          <Route path="system" element={<SystemPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

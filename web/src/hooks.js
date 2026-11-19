@@ -61,3 +61,16 @@ export const ACTIVE_STATUSES = ['queued', 'building', 'deploying'];
 export function formatTime(value) {
   return value ? new Date(value).toLocaleString() : '';
 }
+
+
+export function formatBytes(bytes) {
+  if (bytes === undefined || bytes === null) return '';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(value < 10 && unit > 0 ? 1 : 0)} ${units[unit]}`;
+}

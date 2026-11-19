@@ -6,9 +6,10 @@ import { useEffect } from 'react';
 export default function Shell({ onSignedOut }) {
   const status = useApi('/status');
   const projects = useApi('/projects');
+  const system = useApi('/system')
 
   async function signOut() {
-    await api('/auth/logout', { method: 'POST' }).catch(() => {});
+    await api('/auth/logout', { method: 'POST' }).catch(() => { });
     onSignedOut();
   }
 
@@ -17,12 +18,22 @@ export default function Shell({ onSignedOut }) {
     return () => clearInterval(timer);
   }, [status.reload]);
 
+
+  useEffect(() => {
+    const timer = setInterval(system.reload, 30000);
+    return () => clearInterval(timer);
+  }, [system.reload]);
+
   return (
     <div className="shell">
       <aside className="sidebar">
         <Link to="/" className="sidebar-title">
           Platform
         </Link>
+        <NavLink to="/system" className="nav-link">
+          <span className="lamp" data-state={system.data?.lamp} aria-hidden="true" />
+          Server
+        </NavLink>
         <nav aria-label="Projects">
           <h2 className="sidebar-heading">Projects</h2>
           {projects.data?.length ? (
@@ -55,6 +66,7 @@ export default function Shell({ onSignedOut }) {
             projectsLoading: projects.loading,
             reloadProjects: projects.reload,
             status: status.data,
+            system: system.data,
           }}
         />
       </main>
