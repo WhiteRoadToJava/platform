@@ -345,6 +345,7 @@ a {
   grid-column: 2;
   color: var(--ink-muted);
   font-size: 14px;
+  padding-left: 10px;
 }
 
 .row-aside {
