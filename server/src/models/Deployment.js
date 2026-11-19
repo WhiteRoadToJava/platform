@@ -6,7 +6,7 @@ const deploymentSchema = new mongoose.Schema(
     environment: { type: mongoose.Schema.Types.ObjectId, ref: 'Environment', required: true },
     status: {
       type: String,
-            enum: ['queued', 'building', 'built', 'deploying', 'running', 'superseded', 'failed', 'cancelled'],
+      enum: ['queued', 'building', 'built', 'deploying', 'running', 'superseded', 'failed', 'cancelled'],
       default: 'queued',
     },
     branch: String,
@@ -14,6 +14,7 @@ const deploymentSchema = new mongoose.Schema(
     commitMessage: String,
     buildType: String,
     image: String,
+    reusedFrom: { type: mongoose.Schema.Types.ObjectId, ref: 'Deployment' },
     error: String,
     startedAt: Date,
     finishedAt: Date,

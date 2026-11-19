@@ -6,7 +6,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { config } from '../config.js';
 import { run } from '../lib/process.js';
 import { resolveVariables } from '../lib/variables.js';
-import { containerName } from '../routing/traefik.js';
+import { containerName } from '../lib/environments.js';
 import { saveContainerLogs } from '../monitor/logs.js';
 
 async function exists(file) {
@@ -95,7 +95,7 @@ async function waitUntilHealthy(name, service, log) {
 }
 
 export async function deployContainer({ deployment, service, project, environment, log, step }) {
-  const name = containerName(project, service);
+  const name = containerName(project, service, environment);
   const nextName = `${name}-next`;
 
   const current = await inspect(name);
@@ -150,6 +150,7 @@ export async function deployContainer({ deployment, service, project, environmen
         '--label', 'platform.managed=true',
         '--label', `platform.service=${service._id}`,
         '--label', `platform.deployment=${deployment._id}`,
+        '--label', `platform.environment=${environment._id}`,
         '--env-file', envFile,
         ...volumeArgs,
         deployment.image,
@@ -165,13 +166,13 @@ export async function deployContainer({ deployment, service, project, environmen
     await waitUntilHealthy(nextName, service, log);
   } catch (err) {
     log.write('\nLast output from the new container:\n');
-    await run('docker', ['logs', '--tail', '40', nextName], { log }).catch(() => {});
-    await run('docker', ['rm', '-f', nextName]).catch(() => {});
+    await run('docker', ['logs', '--tail', '40', nextName], { log }).catch(() => { });
+    await run('docker', ['rm', '-f', nextName]).catch(() => { });
     throw err;
   }
 
   step('Switching traffic to the new container');
-    if (current) {
+  if (current) {
     await saveContainerLogs(name, current.Config.Labels?.['platform.deployment'], 'replaced');
     log.write('Saved the last 500 log lines of the previous version\n');
     await run('docker', ['rm', '-f', name], { log });

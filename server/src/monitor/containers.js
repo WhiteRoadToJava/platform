@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { run } from '../lib/process.js';
 import { Deployment } from '../models/Deployment.js';
+import { Environment } from '../models/Environment.js';
 import { Service } from '../models/Service.js';
 
 const POLL_MS = 15000;
@@ -43,53 +44,66 @@ function detectCrash(container, record) {
   const startedAgo = Date.now() - Date.parse(container.State.StartedAt);
   return container.RestartCount > 0 && startedAgo < CRASH_WINDOW_MS;
 }
-
 async function check() {
-  const [containers, services, active] = await Promise.all([
+  const [containers, services, environments, active] = await Promise.all([
     inspectManagedContainers(),
     Service.find().select('project name').lean(),
-    Deployment.find({ status: { $in: ACTIVE } }).select('service').lean(),
+    Environment.find().select('project kind').lean(),
+    Deployment.find({ status: { $in: ACTIVE } }).select('service environment').lean(),
   ]);
 
-  const deploying = new Set(active.map((d) => d.service.toString()));
-  const byService = new Map();
+  const productionOf = new Map(
+    environments.filter((env) => env.kind === 'production').map((env) => [env.project.toString(), env._id.toString()]),
+  );
+  const deploying = new Set(active.map((d) => `${d.service}:${d.environment}`));
+
+  const byKey = new Map();
   for (const container of containers) {
     if (container.Name.endsWith('-next')) continue;
-    const serviceId = container.Config.Labels?.['platform.service'];
-    if (serviceId) byService.set(serviceId, container);
+    const labels = container.Config.Labels ?? {};
+    const serviceId = labels['platform.service'];
+    if (!serviceId) continue;
+    const service = services.find((s) => s._id.toString() === serviceId);
+    const environmentId = labels['platform.environment'] ?? productionOf.get(service?.project.toString());
+    byKey.set(`${serviceId}:${environmentId}`, container);
   }
 
-  const next = { services: {}, projects: {}, checkedAt: new Date().toISOString() };
+  const next = { services: {}, byEnvironment: {}, projects: {}, checkedAt: new Date().toISOString() };
 
   for (const service of services) {
-    const id = service._id.toString();
-    const container = byService.get(id);
-    const record = observed.get(id) ?? {};
+    const projectEnvironments = environments.filter((env) => env.project.equals(service.project));
+    for (const environment of projectEnvironments) {
+      const key = `${service._id}:${environment._id}`;
+      const container = byKey.get(key);
+      const record = observed.get(key) ?? {};
 
-    if (container) {
-      if (detectCrash(container, record)) {
-        record.lastCrashAt = Date.now();
-        monitorEvents.emit('crash', { service, container });
+      if (container) {
+        if (detectCrash(container, record)) {
+          record.lastCrashAt = Date.now();
+          monitorEvents.emit('crash', { service, environment, container });
+        }
+        record.containerId = container.Id;
+        record.restartCount = container.RestartCount;
+        record.status = container.State.Status;
       }
-      record.containerId = container.Id;
-      record.restartCount = container.RestartCount;
-      record.status = container.State.Status;
+
+      const status = describe(container, record, deploying.has(key));
+      if (record.lamp === 'fail' && status.lamp === 'ok') monitorEvents.emit('recover', { service, environment });
+      record.lamp = status.lamp;
+      observed.set(key, record);
+
+      next.byEnvironment[key] = status;
+      if (environment.kind === 'production') {
+        next.services[service._id] = status;
+        const projectId = service.project.toString();
+        const current = next.projects[projectId];
+        if (!current || RANK[status.lamp] > RANK[current]) next.projects[projectId] = status.lamp;
+      }
     }
-
-    const status = describe(container, record, deploying.has(id));
-    if (record.lamp === 'fail' && status.lamp === 'ok') monitorEvents.emit('recover', { service });
-    record.lamp = status.lamp;
-    observed.set(id, record);
-
-    next.services[id] = status;
-    const projectId = service.project.toString();
-    const current = next.projects[projectId];
-    if (!current || RANK[status.lamp] > RANK[current]) next.projects[projectId] = status.lamp;
   }
 
   snapshot = next;
 }
-
 export function getStatus() {
   return snapshot;
 }

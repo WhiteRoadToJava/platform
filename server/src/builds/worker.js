@@ -76,8 +76,12 @@ async function runDeployment(deployment) {
   const step = (message) => log.write(`\n==> ${message}\n`);
 
   try {
-    deployment.image = await buildImage({ deployment, service, project, workdir, log, step });
-    deployment.status = 'deploying';
+    if (deployment.reusedFrom) {
+      step(`Reusing the production image ${deployment.image}`);
+      log.write(`This environment has no "${environment.branch}" branch in ${service.repoUrl}, so it runs the production version.\n`);
+    } else {
+      deployment.image = await buildImage({ deployment, service, project, workdir, log, step });
+    } deployment.status = 'deploying';
     await deployment.save();
 
     await deployContainer({ deployment, service, project, environment, log, step });

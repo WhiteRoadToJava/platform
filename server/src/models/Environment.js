@@ -5,7 +5,8 @@ const environmentSchema = new mongoose.Schema(
     project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
     name: { type: String, required: true },
     kind: { type: String, enum: ['production', 'preview'], required: true },
-        database: {
+    branch: String,
+    database: {
       name: String,
       username: String,
       passwordEncrypted: String,
