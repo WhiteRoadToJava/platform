@@ -33,12 +33,11 @@ export default function ProjectsHome() {
       <ul className="rows">
         {projects.map((project) => (
           <li key={project._id} className="row">
-            <span className="lamp" data-state={status?.projects[project._id]} aria-hidden="true" />            <Link to={`/projects/${project._id}`} className="row-title">
-              {project.baseDomain}
+            <span className="lamp" data-state={status?.projects[project._id]} aria-hidden="true" />
+            <Link to={`/projects/${project._id}`} className="row-title">
+              {project.name}
             </Link>
-            <span className="row-meta">
-              {status?.services[service._id]?.label ?? 'Checking…'} · {serviceAddress(service, project.baseDomain)}
-            </span>
+            <span className="row-meta">{project.baseDomain}</span>
             <span className="row-aside">
               {project.services.length} {project.services.length === 1 ? 'service' : 'services'}
             </span>
