@@ -51,44 +51,58 @@ export function databaseReferences(environment) {
 
 const BATCH_SIZE = 1000;
 
-export async function copyDatabase(sourceName, targetName) {
+function connectAs(environment) {
+  return new mongoose.mongo.MongoClient(databaseReferences(environment)['db.uri']);
+}
+
+export async function copyDatabase(sourceEnvironment, targetEnvironment) {
+  const sourceName = sourceEnvironment.database?.name;
+  const targetName = targetEnvironment.database?.name;
   if (!sourceName || !targetName || sourceName === targetName) {
     throw new HttpError(400, 'Source and target databases must be two different databases.');
   }
-  const client = mongoose.connection.getClient();
-  const source = client.db(sourceName);
-  const target = client.db(targetName);
 
-  await target.dropDatabase();
+  const sourceClient = connectAs(sourceEnvironment);
+  const targetClient = connectAs(targetEnvironment);
+  try {
+    const source = sourceClient.db(sourceName);
+    const target = targetClient.db(targetName);
 
-  const collections = await source.listCollections({ type: 'collection' }).toArray();
-  const copied = [];
-  for (const { name, options } of collections) {
-    if (name.startsWith('system.')) continue;
-    await target.createCollection(name, options);
+    for (const { name } of await target.listCollections({ type: 'collection' }).toArray()) {
+      if (!name.startsWith('system.')) await target.collection(name).drop();
+    }
 
-    let count = 0;
-    let batch = [];
-    for await (const document of source.collection(name).find()) {
-      batch.push(document);
-      if (batch.length === BATCH_SIZE) {
+    const collections = await source.listCollections({ type: 'collection' }).toArray();
+    const copied = [];
+    for (const { name, options } of collections) {
+      if (name.startsWith('system.')) continue;
+      await target.createCollection(name, options);
+
+      let count = 0;
+      let batch = [];
+      for await (const document of source.collection(name).find()) {
+        batch.push(document);
+        if (batch.length === BATCH_SIZE) {
+          await target.collection(name).insertMany(batch, { ordered: false });
+          count += batch.length;
+          batch = [];
+        }
+      }
+      if (batch.length) {
         await target.collection(name).insertMany(batch, { ordered: false });
         count += batch.length;
-        batch = [];
       }
-    }
-    if (batch.length) {
-      await target.collection(name).insertMany(batch, { ordered: false });
-      count += batch.length;
-    }
 
-    const indexes = await source.collection(name).indexes();
-    for (const { key, v, ns, ...options } of indexes) {
-      if (options.name === '_id_') continue;
-      await target.collection(name).createIndex(key, options);
-    }
+      const indexes = await source.collection(name).indexes();
+      for (const { key, v, ns, ...options } of indexes) {
+        if (options.name === '_id_') continue;
+        await target.collection(name).createIndex(key, options);
+      }
 
-    copied.push({ name, count });
+      copied.push({ name, count });
+    }
+    return copied;
+  } finally {
+    await Promise.all([sourceClient.close(), targetClient.close()]);
   }
-  return copied;
 }

@@ -67,8 +67,7 @@ environmentsRouter.post('/environments/:id/database/refresh', async (req, res) =
   if (refreshing.has(key)) throw new HttpError(409, 'A refresh is already running for this environment.');
   refreshing.add(key);
   try {
-    const collections = await copyDatabase(production.database.name, environment.database.name);
-    environment.database.refreshedAt = new Date();
+    const collections = await copyDatabase(production, environment); environment.database.refreshedAt = new Date();
     await environment.save();
     const restarted = await restartContainers(environment);
     res.json({ collections, restarted, refreshedAt: environment.database.refreshedAt });
